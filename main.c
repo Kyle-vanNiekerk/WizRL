@@ -7,8 +7,8 @@
 // - libncurses5-dev
 // - libncursesw5-dev
 
-#define mapLengthX 20
-#define mapLengthY 80
+#define rows 20
+#define cols 100
 
 /*
     ToDo:
@@ -26,39 +26,40 @@
 
 struct playerCharacter {
     char symbol;
-    int x;
-    int y;
+    int row;
+    int col;
 };
 
 // Global Variables
-char map[mapLengthY][mapLengthX];
-char objects[mapLengthY][mapLengthX];
-char creatures[mapLengthY][mapLengthX];
-char walls[mapLengthY][mapLengthX];
-char nature[mapLengthY][mapLengthX];
+struct map {
+    char nature[rows][cols];
+    char buildings[rows][cols];
+    char objects[rows][cols];
+    char creatures[rows][cols];
+    char result[rows][cols];
+};
 
-void drawMap(char map[mapLengthY][mapLengthX], char nature[mapLengthY][mapLengthX],
-     char walls[mapLengthY][mapLengthX], char objects[mapLengthY][mapLengthX],
-     char creatures[mapLengthY][mapLengthX]) {
-
-    // Draw map Terrain -> objects -> creatures
-    for (int i = 0; i < mapLengthX; i++)
+void drawMap(struct map* myMap) {
+    char offScreenBuffer[rows][cols];
+    // Draw map Terrain -> Objects -> Creatures into the off-screen buffer
+    for (int i = 0; i < rows; i++)
     {
-        for (int j = 0; j < mapLengthY; j++)
+        for (int j = 0; j < cols; j++)
         {
-            map[i][j] = nature[i][j];
-            map[i][j] = walls[i][j];
-            map[i][j] = objects[i][j];
-            map[i][j] = creatures[i][j];
+            myMap->result[i][j] = myMap->nature[i][j];
+            myMap->result[i][j] = myMap->buildings[i][j];
+            myMap->result[i][j] = myMap->objects[i][j];
+            myMap->result[i][j] = myMap->creatures[i][j];
+            offScreenBuffer[i][j] = myMap->result[i][j];
         }
     }
 
-    // Draw the Map to the Terminal
-    for (int y = 0; y < mapLengthX; y++)
+    // Draw the Map to the Terminal/Buffer
+    for (int y = 0; y < rows; y++)
     {
-        for (int x = 0; x < mapLengthY; x++)
+        for (int x = 0; x < cols; x++)
         {
-            mvaddch(x, y, map[x][y]);
+            mvaddch(y, x, offScreenBuffer[y][x]);
         }
     }
     refresh();
@@ -66,28 +67,28 @@ void drawMap(char map[mapLengthY][mapLengthX], char nature[mapLengthY][mapLength
 
 int main()
 {
-    int running = 1;
-
     struct playerCharacter testPlayer;
-    testPlayer.symbol = '@';
-    testPlayer.x = 10;
-    testPlayer.y = 10;
-
     struct playerCharacter* playerPtr = &testPlayer;
+    playerPtr->symbol = '@';
+    playerPtr->row = 0;
+    playerPtr->col = 0;
 
-    for (int i = 0; i < mapLengthX; i++)
+    struct map gameMap;
+    struct map* testMap = &gameMap;
+    for (int i = 0; i < rows; i++)
     {
-        for (int j = 0; j < mapLengthY; j++)
+        for (int j = 0; j < cols; j++)
         {
-            map[i][j] = '.';
-            objects[i][j] = '.';
-            creatures[i][j] = '.';
-            walls[i][j] = '.';
-            nature[i][j] = '.';
+            testMap->objects[i][j] = ' ';
+            testMap->creatures[i][j] = ' ';
+            testMap->buildings[i][j] = ' ';
+            testMap->nature[i][j] = ' ';
         }
     }
 
-    creatures[testPlayer.x][testPlayer.y] = testPlayer.symbol;
+    char prevPos = gameMap.creatures[testPlayer.row][testPlayer.col];
+
+    testMap->creatures[testPlayer.row][testPlayer.col] = testPlayer.symbol;
 
     // Initialize ncurses
     initscr();
@@ -95,34 +96,49 @@ int main()
     cbreak();
     keypad(stdscr, TRUE);
 
-    drawMap(map, nature, walls, objects, creatures);
+    drawMap(testMap);
+
+    int running = 1;
+    int inputKey = 0;
 
     // Directional Movement
-    int inputKey = 0;
     while (running != 0)
     {
+        testMap->creatures[testPlayer.row][testPlayer.col] = prevPos;
+
         inputKey = getch();
         if (inputKey == 27) // esc
             running = 0;
 
         switch (inputKey) {
-        case KEY_UP: // up
-            playerPtr->y--;
+        case KEY_UP:
+            if (playerPtr->row != 0)
+            {
+                playerPtr->row--;
+            }
             break;
-        case KEY_DOWN: // down
-            playerPtr->y++;
+        case KEY_DOWN:
+            if (playerPtr->row < rows - 1)
+            {
+                playerPtr->row++;
+            }
             break;
-        case KEY_LEFT: // left
-            playerPtr->x--;
+        case KEY_LEFT:
+            if (playerPtr->col != 0)
+            {
+                playerPtr->col--;
+            }
             break;
-        case KEY_RIGHT: // right
-            playerPtr->x++;
+        case KEY_RIGHT:
+            if (playerPtr->col < cols - 1)
+            {
+                playerPtr->col++;
+            }
             break;
         }
 
-        creatures[playerPtr->x][playerPtr->y] = playerPtr->symbol;
-        clear();
-        drawMap(map, nature, walls, objects, creatures);
+        testMap->creatures[testPlayer.row][testPlayer.col] = testPlayer.symbol;
+        drawMap(testMap);
     }
 
     // End ncurses
