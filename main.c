@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <conio.h>>
+#include <ncurses.h>
+
+// Libraries:
+// - libncurses5-dev
+// - libncursesw5-dev
 
 #define mapLengthX 20
 #define mapLengthY 80
@@ -17,7 +21,7 @@
     - Character generation/read from file
     - Magic System (More focussed on ingredients than on player stats)
     - Maps: Walls; Floors; Furnature; Nature(Plants; Fire; Water);
-    - NCURSES / SDL for input/colours
+    - SDL Tile Graphics
 */
 
 struct playerCharacter {
@@ -54,22 +58,22 @@ void drawMap(char map[mapLengthY][mapLengthX], char nature[mapLengthY][mapLength
     {
         for (int x = 0; x < mapLengthY; x++)
         {
-            printf("%c", map[x][y]);
+            mvaddch(x, y, map[x][y]);
         }
-        printf("\n");
     }
+    refresh();
 }
 
 int main()
 {
     int running = 1;
 
-    struct  playerCharacter testPlayer;
+    struct playerCharacter testPlayer;
     testPlayer.symbol = '@';
     testPlayer.x = 10;
     testPlayer.y = 10;
 
-    playerCharacter* playerPtr = &testPlayer;
+    struct playerCharacter* playerPtr = &testPlayer;
 
     for (int i = 0; i < mapLengthX; i++)
     {
@@ -85,43 +89,44 @@ int main()
 
     creatures[testPlayer.x][testPlayer.y] = testPlayer.symbol;
 
+    // Initialize ncurses
+    initscr();
+    noecho();
+    cbreak();
+    keypad(stdscr, TRUE);
+
     drawMap(map, nature, walls, objects, creatures);
 
+    // Directional Movement
     int inputKey = 0;
     while (running != 0)
     {
-        inputKey = _getch();
-        if (inputKey == 27)
+        inputKey = getch();
+        if (inputKey == 27) // esc
             running = 0;
 
         switch (inputKey) {
-        case 72:
-            // code for arrow up
-            //playerPtr-> y++;
+        case KEY_UP: // up
             playerPtr->y--;
             break;
-        case 80:
-            // code for arrow down
-            //playerPtr-> y--;
+        case KEY_DOWN: // down
             playerPtr->y++;
             break;
-        case 75:
-            // code for arrow right
-            //playerPtr->x++;
+        case KEY_LEFT: // left
             playerPtr->x--;
-
             break;
-        case 77:
-            // code for arrow left
-            //playerPtr-> x--;
+        case KEY_RIGHT: // right
             playerPtr->x++;
             break;
         }
 
-        creatures[playerPtr-> x][playerPtr-> y] = playerPtr-> symbol;
-        system("cls");
+        creatures[playerPtr->x][playerPtr->y] = playerPtr->symbol;
+        clear();
         drawMap(map, nature, walls, objects, creatures);
     }
+
+    // End ncurses
+    endwin();
 
     return 0;
 }
