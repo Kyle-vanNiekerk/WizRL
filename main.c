@@ -3,26 +3,8 @@
 #include <string.h>
 #include <ncurses.h>
 
-// Libraries:
-// - libncurses5-dev
-// - libncursesw5-dev
-
 #define rows 20
 #define cols 100
-
-/*
-    ToDo:
-    - Convert project to C++, Portable / C 88
-    - Move character with keys
-    - Screen Buffer
-    - Map generation/read from file
-    - Character stats/attributes (Health; Strength; Intelligence; Charisma; Luck)
-    - Character needs (Hunger; Thirst; Sleep)
-    - Character generation/read from file
-    - Magic System (More focussed on ingredients than on player stats)
-    - Maps: Walls; Floors; Furnature; Nature(Plants; Fire; Water);
-    - SDL Tile Graphics
-*/
 
 struct playerCharacter {
     char symbol;
@@ -30,7 +12,6 @@ struct playerCharacter {
     int col;
 };
 
-// Global Variables
 struct map {
     char nature[rows][cols];
     char buildings[rows][cols];
